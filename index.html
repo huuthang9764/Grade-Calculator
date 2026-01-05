@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Tính Điểm SV</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+    /* Giữ nguyên style cũ */
+    :root {
+        --primary: #4F46E5;
+        --bg-grad: linear-gradient(180deg, #EEF2FF 0%, #E0E7FF 100%);
+        --card-bg: #ffffff;
+        --text: #1F2937;
+        --border: #D1D5DB;
+        --radius: 12px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+        font-family: 'Inter', sans-serif;
+        background: var(--bg-grad);
+        min-height: 100vh;
+        display: flex; align-items: center; justify-content: center;
+        padding: 16px; color: var(--text);
+    }
+    .app-card {
+        background: var(--card-bg); width: 100%; max-width: 400px;
+        padding: 24px 20px; border-radius: 24px;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+    }
+    h1 { font-size: 20px; text-align: center; margin-bottom: 24px; color: #111827; font-weight: 800; }
+    label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #4B5563; }
+    .form-group { margin-bottom: 16px; }
+    input, select {
+        width: 100%; height: 48px; padding: 0 16px;
+        border: 1px solid var(--border); border-radius: var(--radius);
+        font-size: 16px; background: #F9FAFB; color: #111827;
+        appearance: none;
+    }
+    input:focus, select:focus { outline: none; border-color: var(--primary); background: #fff; }
+    input.input-error { border-color: #EF4444; background: #FEF2F2; }
+    .select-wrapper { position: relative; }
+    .select-wrapper::after {
+        content: "▼"; font-size: 10px; color: #6B7280;
+        position: absolute; right: 16px; top: 50%; transform: translateY(-50%); pointer-events: none;
+    }
+    .grid-row { display: grid; grid-template-columns: 1.2fr 1.8fr; gap: 12px; }
+    button {
+        width: 100%; height: 52px; background: var(--primary); color: white;
+        border: none; border-radius: var(--radius); font-size: 16px; font-weight: 700;
+        cursor: pointer; margin-top: 10px; transition: transform 0.1s;
+    }
+    button:active { transform: scale(0.98); }
+    #result {
+        margin-top: 20px; padding: 16px; border-radius: var(--radius);
+        background: #F3F4F6; text-align: center; font-size: 14px;
+        display: none; line-height: 1.5;
+    }
+    #result strong { display: block; font-size: 20px; margin-top: 4px; }
+    
+    /* Màu sắc trạng thái */
+    .success { background: #ECFDF5 !important; color: #065F46; border: 1px solid #A7F3D0; }
+    .warning { background: #FFFBEB !important; color: #92400E; border: 1px solid #FDE68A; }
+    .error { background: #FEF2F2 !important; color: #991B1B; border: 1px solid #FECACA; }
+    
+    .sub-text { font-size: 13px; margin-top: 8px; color: #4B5563; }
+</style>
+</head>
+<body>
+
+<div class="app-card">
+    <h1>📱 Tính Điểm Cuối Kỳ</h1>
+
+    <div class="form-group">
+        <label>🎯 Điểm trung bình mong muốn (5.0 - 10.0)</label>
+        <input type="number" id="dtb" inputmode="decimal" placeholder="VD: 8.0" step="0.1" 
+               min="5" max="10" oninput="validateInput(this, 5, 10)">
+    </div>
+
+    <label>📘 Quá trình (% & Điểm)</label>
+    <div class="grid-row form-group">
+        <div class="select-wrapper">
+            <select id="pqt">
+                <option value="0">0%</option>
+                <option value="10">10%</option>
+                <option value="20" selected>20%</option>
+                <option value="30">30%</option>
+                <option value="40">40%</option>
+            </select>
+        </div>
+        <input type="number" id="dqt" inputmode="decimal" placeholder="Điểm (0-10)" step="0.1"
+               min="0" max="10" oninput="validateInput(this, 0, 10)">
+    </div>
+
+    <label>📙 Giữa kỳ (% & Điểm)</label>
+    <div class="grid-row form-group">
+        <div class="select-wrapper">
+            <select id="pgk">
+                <option value="0">0%</option>
+                <option value="10">10%</option>
+                <option value="20">20%</option>
+                <option value="30" selected>30%</option>
+                <option value="40">40%</option>
+            </select>
+        </div>
+        <input type="number" id="dgk" inputmode="decimal" placeholder="Điểm (0-10)" step="0.1"
+               min="0" max="10" oninput="validateInput(this, 0, 10)">
+    </div>
+
+    <button onclick="calculate()">TÍNH TOÁN</button>
+
+    <div id="result"></div>
+</div>
+
+<script>
+    function validateInput(el, min, max) {
+        if (el.value.includes('-')) el.value = el.value.replace(/-/g, '');
+        const val = parseFloat(el.value);
+        if (val < 0 || val > max) el.classList.add('input-error');
+        else el.classList.remove('input-error');
+    }
+
+    function calculate() {
+        const dtbIn = document.getElementById("dtb");
+        const pqtIn = document.getElementById("pqt");
+        const pgkIn = document.getElementById("pgk");
+        const dqtIn = document.getElementById("dqt");
+        const dgkIn = document.getElementById("dgk");
+        const resBox = document.getElementById("result");
+
+        let dtb = parseFloat(dtbIn.value);
+        let pqt = parseInt(pqtIn.value);
+        let pgk = parseInt(pgkIn.value);
+        let dqt = parseFloat(dqtIn.value);
+        let dgk = parseFloat(dgkIn.value);
+
+        resBox.style.display = "block";
+        resBox.className = ""; 
+
+        // Validate cơ bản
+        if (isNaN(dtb) || isNaN(dqt) || isNaN(dgk)) {
+            showError("Vui lòng nhập đủ điểm số!"); return;
+        }
+        if (dtb < 0) dtbIn.value = 0; if (dqt < 0) dqtIn.value = 0; if (dgk < 0) dgkIn.value = 0;
+        if (dtb < 5 || dtb > 10) { showError("Điểm mong muốn phải từ 5.0 đến 10.0"); return; }
+        if (dqt > 10 || dgk > 10) { showError("Điểm thành phần không được quá 10"); return; }
+        if (pqt + pgk >= 100) { showError("Tổng % quá trình + giữa kỳ quá lớn"); return; }
+
+        // --- TÍNH TOÁN ---
+        const pck = 100 - (pqt + pgk); // % Cuối kỳ
+        const currentScore = (dqt * pqt) + (dgk * pgk); // Điểm hiện tại đã nhân trọng số
+        const targetScore = dtb * 100; // Điểm mục tiêu quy đổi ra thang 100
+        
+        const dck = (targetScore - currentScore) / pck; // Điểm cần thi
+
+        // --- LOGIC HIỂN THỊ MỚI ---
+        
+        if (dck < 0) {
+            resBox.innerHTML = `Đã thừa điểm qua môn! 🎉<br><strong>Không cần thi vẫn đạt</strong>`;
+            resBox.classList.add("success");
+        } 
+        else if (dck > 10) {
+            // TÍNH TOÁN THỰC TẾ: Nếu thi 10 điểm thì được bao nhiêu?
+            // (Điểm hiện tại + 10 điểm * %cuối kỳ) / 100
+            const maxPossibleAvg = (currentScore + (10 * pck)) / 100;
+
+            resBox.innerHTML = `
+                🚫 <strong>Không thể đạt mục tiêu ${dtb}!</strong>
+                <div class="sub-text">
+                    Dù bạn thi <b>10 điểm</b> cuối kỳ,<br>
+                    tổng kết cũng chỉ đạt tối đa: <b>${maxPossibleAvg.toFixed(2)}</b>
+                </div>
+                <div style="font-size: 11px; margin-top: 5px; color: #999;">
+                    (Theo lý thuyết cần thi: ${dck.toFixed(2)} điểm)
+                </div>
+            `;
+            resBox.classList.add("error");
+        } 
+        else {
+            resBox.innerHTML = `Để đạt ${dtb} tổng kết, bạn cần thi:<br><strong>${dck.toFixed(2)} điểm</strong>`;
+            if(dck > 8.5) {
+                resBox.classList.add("warning");
+                resBox.innerHTML += `<div class="sub-text">⚠️ Điểm khá cao, cần cố gắng nhiều!</div>`
+            }
+            else resBox.classList.add("success");
+        }
+    }
+
+    function showError(msg) {
+        const resBox = document.getElementById("result");
+        resBox.innerHTML = `❌ ${msg}`;
+        resBox.classList.add("error");
+    }
+</script>
+
+</body>
+</html>
